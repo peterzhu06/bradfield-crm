@@ -39,6 +39,7 @@ var COLLECTIONS = {
 var SETTINGS = {
   SF_SUBTYPES:       { get: function(){ return SF_SUBTYPES; },       set: function(v){ SF_SUBTYPES = v; } },
   DASHBOARD_CONFIG:  { get: function(){ return DASHBOARD_CONFIG; },  set: function(v){ DASHBOARD_CONFIG = v; } },
+  PIPELINE_CHARTS:   { get: function(){ return PIPELINE_CHARTS; },   set: function(v){ PIPELINE_CHARTS = v; } },
   SNAPSHOT_SECTIONS: { get: function(){ return (typeof state !== 'undefined' && state.snapshotSections) || null; },
                        set: function(v){ if (typeof state !== 'undefined') state.snapshotSections = v; } },
 };

@@ -1186,6 +1186,17 @@ var DASHBOARD_CONFIG = [
   { id:'owner',          label:'Pipeline by Owner',        enabled:false },
 ];
 
+// Charts shown on the Deal Pipeline → Charts tab (user-customisable, shared)
+var DEFAULT_PIPELINE_CHARTS = [
+  { id: 'stageValue',      kind: 'hbar' },
+  { id: 'closesByQuarter', kind: 'bar'  },
+  { id: 'ageing',          kind: 'hbar' },
+  { id: 'healthByStage',   kind: 'bar'  },
+  { id: 'weightedByOwner', kind: 'bar'  },
+  { id: 'sector',          kind: 'doughnut' },
+];
+var PIPELINE_CHARTS = JSON.parse(JSON.stringify(DEFAULT_PIPELINE_CHARTS));
+
 let SERVICE_PROVIDERS = [
 
   {

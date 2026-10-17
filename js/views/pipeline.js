@@ -35,11 +35,12 @@ function renderSFPipeline() {
       <button class="vt-btn ${state.pipelineTab==='board'||!state.pipelineTab?'active':''}" onclick="state.pipelineTab='board';state.pipelineViewMode='kanban';renderView()">Board</button>
       <button class="vt-btn ${state.pipelineTab==='table'?'active':''}" onclick="state.pipelineTab='table';state.pipelineViewMode='table';renderView()">Table</button>
       <button class="vt-btn ${state.pipelineTab==='timeline'?'active':''}" onclick="state.pipelineTab='timeline';renderView()">Timeline</button>
+      <button class="vt-btn ${state.pipelineTab==='charts'?'active':''}" onclick="state.pipelineTab='charts';renderView()">Charts</button>
     </div>
     <button class="btn primary" onclick="openDealModal()">+ New Deal</button>
     <button class="btn" onclick="openSnapshotCustomizer()" style="font-size:11.5px;">📋 Weekly Snapshot</button>
   </div>
-  ${state.pipelineTab==='timeline' ? renderDealTimeline(f) : state.pipelineTab==='table' ? renderPipelineTable(f) : renderKanban(f)}`;
+  ${state.pipelineTab==='charts' ? renderPipelineCharts() : state.pipelineTab==='timeline' ? renderDealTimeline(f) : state.pipelineTab==='table' ? renderPipelineTable(f) : renderKanban(f)}`;
 }
 
 // ============================================================
@@ -177,37 +178,9 @@ function deleteBrokingDeal(id) {
 }
 
 function renderKanban(f) {
-  // ── Chart strip ──────────────────────────────────────────────
+  // ── Chart strip (built from the shared chart registry) ─────
   var chartStrip = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;margin-bottom:18px;">'
-
-    // 1. Pipeline value by stage
-    + '<div style="background:var(--white);border:1px solid var(--border);border-radius:8px;padding:16px 18px;">'
-    + '<div style="font-family:\'Spectral\',serif;font-size:13px;color:#000;margin-bottom:2px;">Value by Stage</div>'
-    + '<div style="font-size:10px;color:var(--muted);margin-bottom:12px;">A$m — active deals</div>'
-    + '<div style="position:relative;height:130px;"><canvas id="kb-stageBar"></canvas></div>'
-    + '</div>'
-
-    // 2. Deal value by owner
-    + '<div style="background:var(--white);border:1px solid var(--border);border-radius:8px;padding:16px 18px;">'
-    + '<div style="font-family:\'Spectral\',serif;font-size:13px;color:#000;margin-bottom:2px;">Value by Deal Type</div>'
-    + '<div style="font-size:10px;color:var(--muted);margin-bottom:12px;">A$m — active pipeline</div>'
-    + '<div style="position:relative;height:130px;"><canvas id="kb-dealTypeBar"></canvas></div>'
-    + '</div>'
-
-    // 3. Value by owner by stage (table)
-    + '<div style="background:var(--white);border:1px solid var(--border);border-radius:8px;padding:16px 18px;">'
-    + '<div style="font-family:\'Spectral\',serif;font-size:13px;color:#000;margin-bottom:2px;">Value by Owner & Stage</div>'
-    + '<div style="font-size:10px;color:var(--muted);margin-bottom:12px;">A$m per stage per owner</div>'
-    + '<div id="kb-ownerStageTable" style="overflow:auto;"></div>'
-    + '</div>'
-
-    // 4. Deal count by sector
-    + '<div style="background:var(--white);border:1px solid var(--border);border-radius:8px;padding:16px 18px;">'
-    + '<div style="font-family:\'Spectral\',serif;font-size:13px;color:#000;margin-bottom:2px;">Deals by Sector</div>'
-    + '<div style="font-size:10px;color:var(--muted);margin-bottom:12px;">Count — active pipeline</div>'
-    + '<div style="position:relative;height:130px;"><canvas id="kb-sectorDonut"></canvas></div>'
-    + '</div>'
-
+    + PIPELINE_BOARD_STRIP.map(function(it, i){ return pcCardHTML(it, i, { prefix: 'kb-', height: 130, editable: false, total: PIPELINE_BOARD_STRIP.length }); }).join('')
     + '</div>';
 
   // ── Kanban board ─────────────────────────────────────────────
@@ -250,124 +223,7 @@ function renderKanban(f) {
   return chartStrip + board;
 }
 
-function drawPipelineCharts() {
-  loadChartJs().then(function() {
-    freeCanvases(['kb-stageBar','kb-dealTypeBar','kb-sectorDonut']);
-    var liveStages = ['origination','mandate','live','paused'];
-    var activeDeals = DEALS.filter(function(d){ return liveStages.includes(d.stage); });
-
-    var tickCol  = '#999';
-    var gridCol  = 'rgba(0,0,0,0.04)';
-    var palette  = ['#1a1a1a','#b9975b','#818cf8','#22c55e','#f97316','#38bdf8','#e879f9','#94a3b8'];
-    var stageColors = { origination:'#78716c', mandate:'#c8570a', live:'#44403c', paused:'#c4b5a5' };
-
-    // ── 1. Pipeline value by stage (horizontal bar) ──────────────
-    var c1 = document.getElementById('kb-stageBar');
-    if (c1) {
-      var stageOrder  = ['origination','mandate','live','paused'];
-      var stageLabels = ['Origination','Mandate','Live','Paused'];
-      var stageVals   = stageOrder.map(function(k){ return DEALS.filter(function(d){ return d.stage===k; }).reduce(function(s,d){ return s+d.sizeMn; },0); });
-      new window.Chart(c1, {
-        type: 'bar',
-        data: { labels: stageLabels, datasets: [{ data: stageVals, backgroundColor: Object.values(stageColors), borderRadius: 3, borderSkipped: false }] },
-        options: {
-          indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(ctx){ return ' A$' + ctx.raw + 'm'; } } } },
-          scales: {
-            x: { grid: { color: gridCol }, ticks: { color: tickCol, font: { size: 9 }, callback: function(v){ return 'A$' + v + 'm'; } }, beginAtZero: true },
-            y: { grid: { display: false }, ticks: { color: '#555', font: { size: 9 } } }
-          }
-        }
-      });
-    }
-
-    // ── 2. Deal value by type (bar) ─────────────────────────────
-    var c2 = document.getElementById('kb-dealTypeBar');
-    if (c2) {
-      var dealTypeMap = {};
-      activeDeals.forEach(function(d){ dealTypeMap[d.dealType] = (dealTypeMap[d.dealType]||0) + d.sizeMn; });
-      var dtLabels = Object.keys(dealTypeMap).sort(function(a,b){ return dealTypeMap[b]-dealTypeMap[a]; });
-      var dtVals   = dtLabels.map(function(t){ return dealTypeMap[t]; });
-      var dtColors = dtLabels.map(function(_,i){ return palette[i % palette.length]; });
-      new window.Chart(c2, {
-        type: 'bar',
-        data: { labels: dtLabels, datasets: [{ data: dtVals, backgroundColor: dtColors, borderRadius: 3, borderSkipped: false }] },
-        options: {
-          indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(ctx){ return ' A$' + ctx.raw + 'm'; } } } },
-          scales: {
-            x: { grid: { color: gridCol }, ticks: { color: tickCol, font: { size: 9 }, callback: function(v){ return 'A$' + v + 'm'; } }, beginAtZero: true },
-            y: { grid: { display: false }, ticks: { color: '#555', font: { size: 9 } } }
-          }
-        }
-      });
-    }
-
-    // ── 3. Value by owner by stage (table) ──────────────────────
-    var t3 = document.getElementById('kb-ownerStageTable');
-    if (t3) {
-      var owners3     = Array.from(new Set(activeDeals.map(function(d){ return d.owner; }))).sort();
-      var stageOrder3 = ['origination','mandate','live','paused'];
-      var stageNames3 = { origination:'Origination', mandate:'Mandate', live:'Execution', paused:'Paused' };
-      var stageColMap = { origination:'#94a3b8', mandate:'#c9a84c', live:'#22c55e', paused:'#b0b0b0' };
-
-      var colW = 'width:' + Math.floor(80 / Math.max(owners3.length, 1)) + '%;';
-
-      var tHTML = '<table style="width:100%;border-collapse:collapse;font-size:10.5px;">';
-      // Header row: blank + owner names
-      tHTML += '<thead><tr>';
-      tHTML += '<th style="text-align:left;padding:4px 6px;color:var(--muted);font-weight:600;font-size:9.5px;text-transform:uppercase;letter-spacing:0.05em;border-bottom:2px solid var(--border);width:20%;"></th>';
-      owners3.forEach(function(o) {
-        tHTML += '<th style="text-align:right;padding:4px 6px;color:#000;font-weight:600;font-size:10px;border-bottom:2px solid var(--border);' + colW + '">' + o.split(' ').pop() + '</th>';
-      });
-      tHTML += '</tr></thead><tbody>';
-
-      // One row per stage
-      stageOrder3.forEach(function(stage) {
-        var dot = '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:' + stageColMap[stage] + ';margin-right:4px;vertical-align:middle;"></span>';
-        tHTML += '<tr style="border-bottom:1px solid var(--cream-d);">';
-        tHTML += '<td style="padding:5px 6px;color:var(--text-2);">' + dot + stageNames3[stage] + '</td>';
-        owners3.forEach(function(o) {
-          var val = activeDeals.filter(function(d){ return d.owner===o && d.stage===stage; }).reduce(function(s,d){ return s+d.sizeMn; }, 0);
-          tHTML += '<td style="padding:5px 6px;text-align:right;color:' + (val>0?'#000':'var(--muted)') + ';font-weight:' + (val>0?'500':'400') + ';">' + (val>0?'A$'+val+'m':'—') + '</td>';
-        });
-        tHTML += '</tr>';
-      });
-
-      // Total row
-      tHTML += '<tr style="border-top:2px solid var(--border);">';
-      tHTML += '<td style="padding:5px 6px;color:#000;font-weight:600;font-size:10px;">Total</td>';
-      owners3.forEach(function(o) {
-        var total = activeDeals.filter(function(d){ return d.owner===o; }).reduce(function(s,d){ return s+d.sizeMn; }, 0);
-        tHTML += '<td style="padding:5px 6px;text-align:right;color:#000;font-weight:700;">' + (total>0?'A$'+total+'m':'—') + '</td>';
-      });
-      tHTML += '</tr>';
-
-      tHTML += '</tbody></table>';
-      t3.innerHTML = tHTML;
-    }
-
-    // ── 4. Deal count by sector (donut) ─────────────────────────
-    var c4 = document.getElementById('kb-sectorDonut');
-    if (c4) {
-      var sectorMap = {};
-      activeDeals.forEach(function(d){ sectorMap[d.sector] = (sectorMap[d.sector]||0) + 1; });
-      var sLabels = Object.keys(sectorMap);
-      var sVals   = Object.values(sectorMap);
-      new window.Chart(c4, {
-        type: 'doughnut',
-        data: { labels: sLabels, datasets: [{ data: sVals, backgroundColor: palette.slice(0, sLabels.length), borderWidth: 2, borderColor: '#fff', hoverOffset: 4 }] },
-        options: {
-          responsive: true, maintainAspectRatio: false, cutout: '58%',
-          plugins: {
-            legend: { position: 'right', labels: { font: { size: 9 }, color: '#555', boxWidth: 8, padding: 5 } },
-            tooltip: { callbacks: { label: function(ctx){ return ' ' + ctx.raw + ' deal' + (ctx.raw!==1?'s':''); } } }
-          }
-        }
-      });
-    }
-  });
-}
+function drawPipelineCharts() { pcDrawAll(PIPELINE_BOARD_STRIP, 'kb-'); }
 
 function renderPipelineTable(f) {
   return `<div style="background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
