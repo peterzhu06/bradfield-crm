@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Bradfield Advisors — Internal Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Spectral:wght@300;400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body class="auth-pending">
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-brand">Bradfield Advisors</div>
+    <div class="login-title">Internal Dashboard</div>
+    <div class="login-sub">Sign in with your firm account</div>
+    <form id="login-form" onsubmit="return handleLogin(event)">
+      <label class="form-label" for="login-email">Email</label>
+      <input class="form-input" id="login-email" type="email" autocomplete="username" required>
+      <label class="form-label" for="login-password" style="margin-top:12px;">Password</label>
+      <input class="form-input" id="login-password" type="password" autocomplete="current-password" required>
+      <div id="login-error" class="login-error"></div>
+      <button class="btn primary" id="login-btn" type="submit">Sign in</button>
+      <button class="btn link" type="button" onclick="handleForgotPassword()">Forgot password?</button>
+    </form>
+    <div id="login-config-warning" class="login-error" style="display:none;">Supabase is not configured yet — set the URL and anon key in <code>js/config.js</code>.</div>
+  </div>
+</div>
+<div id="app-loading"><div class="spinner"></div><div id="app-loading-text">Loading shared data…</div></div>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    <img src="data:image/png;base64,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" alt="Bradfield Advisors">
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section-label">Dashboard</div>
+    <div class="nav-item" data-view="overview">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>
+      Overview
+    </div>
+    <div class="nav-section-label">Deal Management</div>
+    <div class="nav-item active" data-view="pipeline">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18"></path></svg>
+      Deal Pipeline
+    </div>
+    <div class="nav-item" data-view="archive">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8v13H3V8"></path><path d="M1 3h22v5H1z"></path><line x1="10" y1="12" x2="14" y2="12"></line></svg>
+      Archive
+    </div>
+    <div class="nav-item" data-view="tasks">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+      Tasks
+    </div>
+    <div class="nav-item" data-view="providers">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"></rect><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"></path><line x1="12" y1="12" x2="12" y2="16"></line><line x1="10" y1="14" x2="14" y2="14"></line></svg>
+      Service Providers
+    </div>
+    <div class="nav-section-label">People &amp; Activity</div>
+    <div class="nav-item" data-view="contacts">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="4"></circle><path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"></path><path d="M19 8v6m-3-3h6"></path></svg>
+      Contacts
+    </div>
+    <div class="nav-item" data-view="activity">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg>
+      Activity Log
+    </div>
+    <div class="nav-item" data-view="library">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+      Document Library
+    </div>
+    <div class="nav-section-label">Market Intelligence</div>
+    <div class="nav-item" data-view="lenders">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"></path></svg>
+      Financiers
+    </div>
+    <div class="nav-item" data-view="advisors">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"></path><circle cx="19" cy="8" r="3"></circle><path d="M22 20c0-2.5-1.8-4.5-4-5"></path></svg>
+      Advisory Landscape
+    </div>
+    <div class="nav-item" data-view="targets">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+      Client Targets
+    </div>
+    <div class="nav-section-label">System</div>
+    <div class="nav-item" data-view="settings">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      Settings
+    </div>
+  </div>
+  <div class="sidebar-footer">Internal use only<br>v3.0 · Bradfield Advisors</div>
+</nav>
+
+
+<!-- MAIN -->
+<div id="main">
+  <div id="topbar">
+    <div class="topbar-left">
+      <div class="page-title" id="page-title">Deal Pipeline</div>
+      <div class="page-subtitle" id="page-subtitle">Active mandates &amp; tracked transactions</div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn gold" onclick="openQuickAdd()" style="font-size:12px;padding:7px 14px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        Quick Add
+      </button>
+      <input type="text" id="global-search" placeholder="Search…" autocomplete="off">
+      <span id="save-indicator" style="opacity: 0;">Saved</span>
+      <div class="topbar-date" id="topbar-date"></div>
+      <div class="user-chip" id="user-chip" title="Account settings" onclick="navigate('settings')"></div>
+      <div style="display:flex;gap:5px;align-items:center;border-left:1px solid var(--border);padding-left:10px;margin-left:2px;">
+        <button class="data-btn" onclick="exportData()" title="Export all data to JSON">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Export
+        </button>
+        <button class="data-btn" onclick="importData()" title="Import data from JSON">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+          Import
+        </button>
+      </div>
+    </div>
+  </div>
+  <div id="content"></div>
+</div>
+
+<!-- MODAL CONTAINER -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">New Deal</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer"></div>
+  </div>
+</div>
+
+<script src="js/vendor/chart.umd.js"></script>
+<script src="js/vendor/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/core/ui.js"></script>
+<script src="js/data/defaults.js"></script>
+<script src="js/logos.js"></script>
+<script src="js/core/store.js"></script>
+<script src="js/core/auth.js"></script>
+<script src="js/app.js"></script>
+<script src="js/views/overview.js"></script>
+<script src="js/views/financiers.js"></script>
+<script src="js/views/pipeline.js"></script>
+<script src="js/views/archive.js"></script>
+<script src="js/views/advisors.js"></script>
+<script src="js/views/targets.js"></script>
+<script src="js/views/providers.js"></script>
+<script src="js/views/contacts.js"></script>
+<script src="js/views/activity.js"></script>
+<script src="js/views/library.js"></script>
+<script src="js/views/tasks.js"></script>
+<script src="js/views/settings.js"></script>
+<script src="js/snapshots.js"></script>
+<script src="js/quickadd.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
